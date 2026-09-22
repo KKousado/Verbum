@@ -43,7 +43,8 @@ app.post('/api/create-charge', async (req, res) => {
       headers: {
         'X-Api-Key': FLOWINPAY_API_KEY,
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'User-Agent': 'Verbum-Checkout/1.0 (Node.js)'
       },
       body: JSON.stringify({
         value,
@@ -66,6 +67,11 @@ app.post('/api/create-charge', async (req, res) => {
       });
     }
 
+    // Se FlowinPay retornar qr_code_image nulo, gera automaticamente a partir do br_code
+    if (data.charge && !data.charge.qr_code_image && data.charge.br_code) {
+      data.charge.qr_code_image = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(data.charge.br_code)}`;
+    }
+
     console.log(`[PIX] Cobrança criada: #${data.charge?.id} — R$ ${value}`);
     res.json(data);
 
@@ -81,7 +87,8 @@ app.get('/api/check-charge/:id', async (req, res) => {
     const response = await fetch(`${FLOWINPAY_BASE}/charges/${req.params.id}`, {
       headers: {
         'X-Api-Key': FLOWINPAY_API_KEY,
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'User-Agent': 'Verbum-Checkout/1.0 (Node.js)'
       }
     });
 
