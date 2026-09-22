@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4A1420">
+  <meta name="description" content="VERBUM Bíblias Personalizadas — Cada exemplar feito à mão e gravado com seu nome. Uma relíquia de família para guardar por gerações.">
+  <title>VERBUM — Bíblias Personalizadas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ─── Notificações de Prova Social ─── -->
+  <div id="notification-container" class="notif-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ─── Banner de Urgência ─── -->
+  <div class="urgency-banner" role="alert">
+    <span>⏳</span>
+    <span>Oferta encerra em</span>
+    <span id="countdown" class="urgency-timer">03:00:00</span>
+    <span class="urgency-sep">·</span>
+    <span><strong>Estoque limitado</strong></span>
+  </div>
+
+  <!-- ─── Header ─── -->
+  <header class="site-header">
+    <div class="header-inner">
+
+      <a href="index.html" class="header-logo" aria-label="VERBUM Bíblias Personalizadas — Página inicial">
+        <img src="Verbum_Bible_logo_design_2K_20260922172732.jpeg"
+             alt="Verbum"
+             class="header-logo-img"
+             onerror="this.style.display='none'">
+        <div class="logo-text-wrap">
+          <span class="logo-name">VERBUM</span>
+          <span class="logo-sub">Bíblias Personalizadas</span>
+        </div>
+      </a>
+
+      <nav class="header-nav" aria-label="Menu principal">
+        <a href="#biblias"       class="nav-link">Bíblias</a>
+        <a href="#acessorios"    class="nav-link">Acessórios</a>
+        <a href="#como-funciona" class="nav-link">Como Funciona</a>
+      </nav>
+
+      <button class="cart-btn" id="cart-btn" aria-label="Abrir carrinho">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <span class="cart-btn-label">Carrinho</span>
+        <span id="cart-count" class="cart-count" aria-label="itens no carrinho">0</span>
+      </button>
+
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ══ HERO ══════════════════════════════════════════ -->
+    <section class="hero" aria-label="Apresentação Verbum">
+
+      <!-- Área visual: Bíblia em fundo bordô (aparece PRIMEIRO no mobile) -->
+      <div class="hero-visual-area">
+        <div class="hero-bible-wrap">
+          <div class="hero-bible-frame">
+            <img
+              class="hero-bible-img"
+              src="biblias/Combo B%C3%ADblia Courino Caramelo Floral com Nome + Cartela de %C3%ADndices + Placa Grande/E3982A9D-779C-4A44-8197-0824C3BFAAEA.png"
+              alt="Bíblia Personalizada Verbum — Courino Caramelo Floral"
+              loading="eager"
+              onerror="this.closest('.hero-bible-frame').innerHTML='<div style=\'width:260px;height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#D4A845;\'><span style=\'font-size:5rem;\'>✝</span><span style=\'font-family:Cormorant Garamond,serif;font-size:1.2rem;letter-spacing:0.12em;\'>VERBUM</span></div>'">
+          </div>
+          <div class="hero-badge-float">
+            ✝ Gravação<br>Artesanal
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de texto (aparece DEPOIS no mobile) -->
+      <div class="hero-text-area">
+        <div class="hero-tag">✝ Para cada geração</div>
+        <h1 class="hero-title">
+          Uma Bíblia gravada<br>
+          para <span>durar gerações</span>
+        </h1>
+        <p class="hero-subtitle">
+          Personalizada com seu nome e um versículo escolhido por você,
+          feita à mão com materiais que o tempo respeita.
+          O presente que se guarda — nunca que se descarta.
+        </p>
+        <div class="hero-ctas">
+          <a href="#biblias" class="btn-primary">Personalizar minha Bíblia →</a>
+          <a href="#como-funciona" class="btn-outline">Como funciona</a>
+        </div>
+        <div class="hero-badges">
+          <span class="hero-badge">⏳ Produção: 4 dias</span>
+          <span class="hero-badge">🚚 Frete: 7 dias</span>
+          <span class="hero-badge">📦 Todo o Brasil</span>
+          <span class="hero-badge">🔒 Compra 100% segura</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Feature Strip (como Nexora) ── -->
+    <div class="feature-strip">
+      <div class="feature-strip-inner">
+        <div class="feature-card">
+          <div class="feature-icon">✒️</div>
+          <h3>Gravação Artesanal</h3>
+          <p>Cada nome gravado à mão com precisão e cuidado únicos.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📖</div>
+          <h3>Bíblia de Qualidade</h3>
+          <p>Courino, couro ou linho — materiais que duram gerações.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⏳</div>
+          <h3>Produção Artesanal</h3>
+          <p>Prazo de 4 dias para gravação e acabamento do exemplar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚚</div>
+          <h3>Frete Seguro</h3>
+          <p>Prazo de 7 dias com envio rastreado para todo o Brasil.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ COMO FUNCIONA ══════════════════════════════════ -->
+    <section id="como-funciona" aria-label="Como funciona">
+      <div class="section-wrap">
+        <div class="section-header">
+          <h2 class="section-title">Como funciona</h2>
+          <div class="sep-center"></div>
+          <p class="section-sub">Da escolha à sua porta — simples assim</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h3>Escolha sua Bíblia</h3>
+              <p>Selecione o modelo, a cor e o acabamento que combinam com você ou com quem vai receber.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h3>Personalize</h3>
+              <p>Informe o nome a ser gravado e o versículo especial que marcará cada abertura das páginas.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h3>Receba em casa</h3>
+              <p>Sua Bíblia é gravada com carinho e enviada embalada como uma relíquia — pronta para emocionar.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ══ BÍBLIAS ═══════════════════════════════════════ -->
+    <section id="biblias" aria-label="Bíblias Personalizadas">
+      <div class="section-wrap">
+        <div class="section-header">
+          <h2 class="section-title">Bíblias Personalizadas</h2>
+          <div class="sep-center"></div>
+          <p class="section-sub">Cada exemplar é único — feito à mão, gravado com seu nome</p>
+        </div>
+        <div id="biblias-grid" class="product-grid" role="list">
+          <!-- Preenchido por app.js -->
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ══ ACESSÓRIOS ════════════════════════════════════ -->
+    <section id="acessorios" aria-label="Acessórios">
+      <div class="section-wrap">
+        <div class="section-header">
+          <h2 class="section-title">Acessórios</h2>
+          <div class="sep-center"></div>
+          <p class="section-sub">Complete sua experiência com a Palavra</p>
+        </div>
+        <div id="acessorios-grid" class="product-grid" role="list">
+          <!-- Preenchido por app.js -->
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ══ CONFIANÇA ═════════════════════════════════════ -->
+    <section class="trust-section" aria-label="Depoimentos e selos de confiança">
+      <div class="trust-inner">
+        <blockquote class="trust-quote">
+          <div class="sep-center" style="margin-bottom: 1.25rem;"></div>
+          <p>"A Bíblia que presenteei para minha mãe chegou embrulhada em seda,
+             com o nome dela gravado em dourado. Ela chorou na hora de abrir.
+             Nunca vi um presente fazer tanto efeito."</p>
+          <cite>— Juliana M. · São Paulo, SP</cite>
+          <div class="sep-center" style="margin-top: 1.25rem;"></div>
+        </blockquote>
+
+        <div class="trust-seals" role="list">
+          <div class="trust-seal" role="listitem">
+            <div class="seal-content">
+              <span class="seal-icon">✒️</span>
+              <span class="seal-label">Gravação<br>Garantida</span>
+            </div>
+          </div>
+          <div class="trust-seal" role="listitem">
+            <div class="seal-content">
+              <span class="seal-icon">📦</span>
+              <span class="seal-label">Envio<br>Seguro</span>
+            </div>
+          </div>
+          <div class="trust-seal" role="listitem">
+            <div class="seal-content">
+              <span class="seal-icon">🤝</span>
+              <span class="seal-label">Feito<br>à Mão</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══ FOOTER ══════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-line"></div>
+    <div class="footer-body">
+      <img src="Verbum_Bible_logo_design_2K_20260922172732.jpeg"
+           alt="VERBUM"
+           class="footer-seal-img"
+           onerror="this.style.display='none'">
+      <p class="footer-copy">© 2023 VERBUM Bíblias Personalizadas · Todos os direitos reservados</p>
+      <p class="footer-verse">«No princípio era o Verbo» — João 1:1</p>
+    </div>
+  </footer>
+
+  <!-- ─── Overlay do Carrinho ─── -->
+  <div id="cart-overlay" class="cart-overlay" aria-hidden="true"></div>
+
+  <!-- ─── Drawer do Carrinho ─── -->
+  <aside id="cart-drawer" class="cart-drawer" role="dialog"
+         aria-label="Carrinho de compras" aria-modal="true">
+    <div class="cart-hdr">
+      <h2 class="cart-title">✝ Carrinho</h2>
+      <button class="cart-close-btn" id="cart-close-btn" aria-label="Fechar carrinho">✕</button>
+    </div>
+    <div class="cart-items-wrap" id="cart-items-list">
+      <div class="cart-empty-msg">Sua cestinha está vazia.</div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total-row">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-val" id="cart-total-value">R$ 0,00</span>
+      </div>
+      <button class="cart-checkout-btn hidden" id="cart-checkout-btn">
+        Finalizar pedido →
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Modal de Imagens ─── -->
+  <div id="image-modal" class="img-modal hidden"
+       role="dialog" aria-label="Visualizar imagem" aria-modal="true">
+    <div class="img-modal-inner">
+      <button class="img-modal-close" id="image-modal-close" aria-label="Fechar">✕</button>
+      <img class="img-modal-main" id="img-modal-main" src="" alt="Imagem do produto">
+      <div class="img-modal-thumbs" id="img-modal-thumbs"></div>
+    </div>
+  </div>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

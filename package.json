@@ -1,0 +1,22 @@
+{
+  "name": "verbum-site",
+  "version": "1.0.0",
+  "description": "VERBUM — Bíblias Personalizadas com Integração PIX FlowinPay",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["verbum", "biblias", "pix", "flowinpay"],
+  "author": "Verbum Bíblias Personalizadas"
+}
+
