@@ -119,7 +119,7 @@ function buildCard(p) {
         <span>·</span>
         <span>🚚 Frete: <strong>7 dias</strong></span>
       </div>
-      <button class="card-cta" onclick="addToCart(${p.id})">
+      <button class="card-cta" onclick="handlePersonalizeClick(${p.id})">
         Personalizar minha Bíblia
       </button>
     </div>`;
@@ -228,6 +228,95 @@ function bumpCartCount() {
   }
 }
 
+// ═══════════════════════════════════════════════════════
+//  MODAL DE OPÇÕES DA BÍBLIA (VERSÃO & TAMANHO DA LETRA)
+// ═══════════════════════════════════════════════════════
+let currentOptionsProduct = null;
+
+function handlePersonalizeClick(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+
+  if (p.category === 'biblia') {
+    openBibleOptionsModal(p);
+  } else {
+    addToCart(productId);
+  }
+}
+
+function openBibleOptionsModal(product) {
+  currentOptionsProduct = product;
+  const modal = document.getElementById('bible-options-modal');
+  const imgEl = document.getElementById('opt-product-img');
+  const nameEl = document.getElementById('opt-product-name');
+  const priceEl = document.getElementById('opt-product-price');
+
+  if (imgEl && product.images?.[0]) imgEl.src = encSrc(product.images[0]);
+  if (nameEl) nameEl.textContent = product.name;
+  if (priceEl) priceEl.textContent = formatBRL(product.price);
+
+  // Seleciona ARA por padrão (com a badge ⭐ Mais Pedida)
+  const araCard = document.querySelector('.opt-version-card input[value="ARA"]')?.closest('.opt-version-card');
+  if (araCard) selectVersionCard(araCard);
+
+  const lgCard = document.querySelector('.opt-font-card input[value="Letra Grande"]')?.closest('.opt-font-card');
+  if (lgCard) selectFontSizeCard(lgCard);
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeBibleOptionsModal() {
+  const modal = document.getElementById('bible-options-modal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+  currentOptionsProduct = null;
+}
+
+function selectVersionCard(card) {
+  document.querySelectorAll('.opt-version-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  const radio = card.querySelector('input[type="radio"]');
+  if (radio) radio.checked = true;
+}
+
+function selectFontSizeCard(card) {
+  document.querySelectorAll('.opt-font-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  const radio = card.querySelector('input[type="radio"]');
+  if (radio) radio.checked = true;
+}
+
+function confirmBibleOptions() {
+  if (!currentOptionsProduct) return;
+
+  const version = document.querySelector('input[name="bible-version"]:checked')?.value || 'ARA';
+  const fontSize = document.querySelector('input[name="bible-font-size"]:checked')?.value || 'Letra Grande';
+
+  // Adiciona ao carrinho com as opções escolhidas
+  const existing = cart.find(i => i.id === currentOptionsProduct.id);
+  if (existing) {
+    existing.qty = (existing.qty || 1) + 1;
+    existing.versao = version;
+    existing.tamanhoLetra = fontSize;
+  } else {
+    cart.push({
+      id: currentOptionsProduct.id,
+      qty: 1,
+      versao: version,
+      tamanhoLetra: fontSize
+    });
+  }
+
+  saveCart();
+  closeBibleOptionsModal();
+
+  // Avança direto para o checkout para preencher nome e dados de gravação
+  window.location.href = 'checkout.html';
+}
+
 function renderCartItems() {
   const wrap = document.getElementById('cart-items-list');
   const chkBtn = document.getElementById('cart-checkout-btn');
@@ -244,6 +333,7 @@ function renderCartItems() {
     const p = PRODUCTS.find(x => x.id === item.id);
     if (!p) return '';
     total += p.price * (item.qty || 1);
+    const versionLabel = item.versao ? `<div style="font-size:0.75rem;color:var(--gold);font-style:italic;margin-top:2px;">Versão: ${item.versao} · ${item.tamanhoLetra}</div>` : '';
     return `
       <div class="cart-item">
         <img class="cart-item-img"
@@ -253,6 +343,7 @@ function renderCartItems() {
              loading="lazy">
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
+          ${versionLabel}
           <div class="cart-item-price">${p.price > 0 ? formatBRL(p.price) : 'Valor a confirmar'}</div>
         </div>
         <button class="cart-item-remove" onclick="removeFromCart(${p.id})" aria-label="Remover ${p.name}">✕</button>

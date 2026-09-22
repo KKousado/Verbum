@@ -105,11 +105,15 @@ function renderOrderSummary() {
   listEl.innerHTML = cartItems.map(item => {
     const p = item.product;
     const thumb = p.images?.[0] ? encSrc(p.images[0]) : '';
+    const versionTag = item.versao
+      ? `<span class="summary-item-version" style="display:block; font-size:0.75rem; color:var(--brand-accent); font-weight:600; margin: 1px 0 3px;">Versão: ${item.versao} · ${item.tamanhoLetra}</span>`
+      : '';
     return `
       <div class="summary-item-row">
         ${thumb ? `<img src="${thumb}" alt="${p.name}" class="summary-item-img" onerror="this.style.display='none'">` : ''}
         <div class="summary-item-info">
           <h4 class="summary-item-name">${p.name}</h4>
+          ${versionTag}
           <span class="summary-item-qty">Qtd: ${item.qty || 1}</span>
         </div>
         <div class="summary-item-price">${fmt(p.price * (item.qty || 1))}</div>
@@ -145,6 +149,10 @@ function onCustomizationChange() {
     if (prevName) prevName.textContent = nomeGravar;
 
     const extras = [];
+    const bibliaItem = cartItems.find(i => i.versao);
+    if (bibliaItem) {
+      extras.push(`Versão ${bibliaItem.versao} (${bibliaItem.tamanhoLetra})`);
+    }
     if (nomePlaq) extras.push(`Placa: "${nomePlaq}"`);
     if (versiculo) extras.push(`Versículo: "${versiculo}"`);
 
@@ -321,7 +329,7 @@ async function gerarPix() {
   const grav  = document.getElementById('nome-gravar')?.value.trim();
   const plaq  = document.getElementById('nome-plaquinha')?.value.trim();
 
-  const prodNames = cartItems.map(i => i.product.name).join(', ');
+  const prodNames = cartItems.map(i => `${i.product.name}${i.versao ? ` (${i.versao})` : ''}`).join(', ');
   const desc = `VERBUM: ${grav ? `Para ${grav} | ` : ''}${prodNames}`.slice(0, 60);
   const valor = cartTotal > 0 ? cartTotal : 2.00;
 

@@ -286,6 +286,132 @@
     </div>
   </div>
 
+  <!-- ─── Modal de Opções da Bíblia (Versão & Tamanho da Letra) ─── -->
+  <div id="bible-options-modal" class="options-modal hidden" role="dialog" aria-modal="true" aria-label="Escolher versão e tamanho da Bíblia">
+    <div class="options-modal-overlay" onclick="closeBibleOptionsModal()"></div>
+    <div class="options-modal-card">
+      <button class="options-modal-close" onclick="closeBibleOptionsModal()" aria-label="Fechar">✕</button>
+
+      <!-- Cabeçalho do Produto -->
+      <div class="opt-product-header">
+        <img id="opt-product-img" src="" alt="Bíblia selecionada" class="opt-product-thumb">
+        <div class="opt-product-details">
+          <span class="opt-product-tag">✝ Personalize seu exemplar</span>
+          <h3 id="opt-product-name" class="opt-product-title">Bíblia Personalizada</h3>
+          <span id="opt-product-price" class="opt-product-price">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Escolha da Versão / Tradução -->
+      <div class="opt-section">
+        <div class="opt-section-label">
+          <span>Escolha a Tradução / Versão</span>
+          <small>Selecione a versão do texto bíblico de sua preferência:</small>
+        </div>
+        <div class="opt-versions-grid">
+          <!-- ARA - Com Badge "Mais Pedida" -->
+          <label class="opt-version-card selected" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="ARA" checked>
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">ARA</span>
+              <span class="badge-most-wanted">⭐ Mais Pedida</span>
+            </div>
+            <div class="opt-version-name">Almeida Revista e Atualizada</div>
+            <p class="opt-version-desc">Texto clássico e fiel aos originais, a versão mais amada e consagrada no Brasil.</p>
+          </label>
+
+          <!-- ARC -->
+          <label class="opt-version-card" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="ARC">
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">ARC</span>
+            </div>
+            <div class="opt-version-name">Almeida Revista e Corrigida</div>
+            <p class="opt-version-desc">Linguagem tradicional, solene e histórica com a beleza da leitura clássica.</p>
+          </label>
+
+          <!-- NVI -->
+          <label class="opt-version-card" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="NVI">
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">NVI</span>
+            </div>
+            <div class="opt-version-name">Nova Versão Internacional</div>
+            <p class="opt-version-desc">Texto moderno, fluente e de leitura compreensível para estudo diário.</p>
+          </label>
+
+          <!-- NAA -->
+          <label class="opt-version-card" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="NAA">
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">NAA</span>
+            </div>
+            <div class="opt-version-name">Nova Almeida Atualizada</div>
+            <p class="opt-version-desc">A tradicional Almeida com vocabulário atualizado para os dias de hoje.</p>
+          </label>
+
+          <!-- NVT -->
+          <label class="opt-version-card" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="NVT">
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">NVT</span>
+            </div>
+            <div class="opt-version-name">Nova Versão Transformadora</div>
+            <p class="opt-version-desc">Linguagem dinâmica e envolvente que facilita o entendimento profundo.</p>
+          </label>
+
+          <!-- KJA -->
+          <label class="opt-version-card" onclick="selectVersionCard(this)">
+            <input type="radio" name="bible-version" value="KJA">
+            <div class="opt-version-header">
+              <span class="opt-version-abbr">King James</span>
+            </div>
+            <div class="opt-version-name">King James 1611 (KJA)</div>
+            <p class="opt-version-desc">Reverente e poética, mantendo a tradição e riqueza da Bíblia de 1611.</p>
+          </label>
+        </div>
+      </div>
+
+      <!-- Escolha do Tamanho da Letra -->
+      <div class="opt-section">
+        <div class="opt-section-label">
+          <span>Tamanho da Letra</span>
+          <small>Escolha o conforto visual para a sua leitura:</small>
+        </div>
+        <div class="opt-font-sizes-row">
+          <label class="opt-font-card selected" onclick="selectFontSizeCard(this)">
+            <input type="radio" name="bible-font-size" value="Letra Grande" checked>
+            <span class="font-preview" style="font-size: 16px;">Aa</span>
+            <span class="font-title">Letra Grande</span>
+            <small>Padrão confortável</small>
+          </label>
+
+          <label class="opt-font-card" onclick="selectFontSizeCard(this)">
+            <input type="radio" name="bible-font-size" value="Letra Gigante">
+            <span class="font-preview" style="font-size: 19px;">Aa</span>
+            <span class="font-title">Letra Gigante</span>
+            <small>Mais descansada</small>
+          </label>
+
+          <label class="opt-font-card" onclick="selectFontSizeCard(this)">
+            <input type="radio" name="bible-font-size" value="Letra Hipergigante">
+            <span class="font-preview" style="font-size: 22px;">Aa</span>
+            <span class="font-title">Letra Hipergigante</span>
+            <small>Máximo conforto</small>
+          </label>
+        </div>
+      </div>
+
+      <!-- Botão de Confirmação -->
+      <div class="opt-modal-footer">
+        <button type="button" class="btn-confirm-options" onclick="confirmBibleOptions()">
+          <span>Confirmar e Personalizar →</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <script src="products.js"></script>
   <script src="app.js"></script>
 </body>
