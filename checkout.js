@@ -513,7 +513,7 @@ async function gerarPix() {
   const desc = `MANANCIAL: ${grav ? `Para ${grav} | ` : ''}${prodNames}`.slice(0, 60);
 
   if (statusAlert) statusAlert.className = 'pix-status-alert waiting';
-  if (statusMsg) statusMsg.textContent = 'Gerando cobrança PIX com o Banco Central...';
+  if (statusMsg) statusMsg.textContent = 'Gerando seu código PIX com segurança...';
 
   // Exibe o spinner de carregamento centralizado e oculta a imagem até estar pronta
   if (qrLoading) qrLoading.style.display = 'flex';
@@ -575,13 +575,13 @@ async function gerarPix() {
     if (statusAlert) statusAlert.className = 'pix-status-alert';
     if (statusMsg) {
       if (err.message.includes('150') || err.message.includes('máximo')) {
-        statusMsg.innerHTML = '⚠ <strong>Aviso de Limite FlowinPay (R$ 150,00 por PIX):</strong><br>A sua conta na FlowinPay está com a trava inicial padrão de R$ 150,00. Solicite o aumento de limite para R$ 600+ no painel da FlowinPay ou compre as Bíblias individualmente.';
+        statusMsg.innerHTML = '⚠ <strong>Aviso de Limite por Transação:</strong><br>O valor desta compra ultrapassou o limite bancário inicial por transação PIX. Por favor, adquira os itens individualmente ou entre em contato com nosso atendimento.';
       } else {
-        statusMsg.textContent = 'Erro ao conectar: ' + err.message;
+        statusMsg.textContent = 'Erro ao processar pagamento: ' + err.message;
       }
     }
     alert(err.message.includes('150')
-      ? 'Aviso: O gateway FlowinPay limitou esta transação a R$ 150,00 na sua conta. Entre em contato com a FlowinPay para elevar seu limite para R$ 600,00 ou mais!'
+      ? 'Aviso: Esta transação ultrapassou o limite bancário permitido por PIX. Por favor, adquira os itens individualmente ou fale com nosso suporte.'
       : 'Erro ao gerar PIX: ' + err.message);
   }
 }
