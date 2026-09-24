@@ -143,7 +143,10 @@
           <div class="co-fields-grid">
             <div class="co-field">
               <label for="cep">CEP</label>
-              <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9" required inputmode="numeric">
+              <div class="co-input-loading-wrap">
+                <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9" required inputmode="numeric">
+                <span class="co-input-spinner" id="cep-spinner" style="display:none;"></span>
+              </div>
               <span class="co-field-error" id="err-cep"></span>
             </div>
 
@@ -170,7 +173,13 @@
               <input type="text" id="complemento" name="complemento" placeholder="Apto, Bloco (opcional)">
             </div>
 
-            <div class="co-field full">
+            <div class="co-field">
+              <label for="bairro">BAIRRO</label>
+              <input type="text" id="bairro" name="bairro" placeholder="Ex: Centro" required>
+              <span class="co-field-error" id="err-bairro"></span>
+            </div>
+
+            <div class="co-field">
               <label for="cidade">CIDADE</label>
               <input type="text" id="cidade" name="cidade" placeholder="Sua cidade" required>
               <span class="co-field-error" id="err-cidade"></span>
@@ -258,8 +267,12 @@
               <span id="pix-status-msg">Aguardando seu pagamento PIX...</span>
             </div>
 
-            <div class="pix-qr-container">
-              <img id="pix-qr-image" class="pix-qr-code" src="" alt="QR Code PIX">
+            <div class="pix-qr-container" id="pix-qr-container">
+              <div class="pix-qr-loading" id="pix-qr-loading">
+                <div class="pix-spinner"></div>
+                <span>Gerando QR Code Pix...</span>
+              </div>
+              <img id="pix-qr-image" class="pix-qr-code" src="" alt="QR Code PIX" style="display:none;" onload="const l=document.getElementById('pix-qr-loading'); if(l) l.style.display='none'; this.style.display='block';">
             </div>
 
             <div class="pix-total-display">

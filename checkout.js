@@ -330,19 +330,92 @@ function validateStep1() {
   return ok;
 }
 
+// ═══════════════════════════════════════════════════════
+//  CONSULTA DE CEP (ViaCEP)
+// ═══════════════════════════════════════════════════════
+let lastCepQueried = '';
+let cepAbortController = null;
+
+async function consultarCep(cepValue) {
+  const clean = (cepValue || '').replace(/\D/g, '');
+  if (clean.length !== 8) return;
+  if (clean === lastCepQueried) return;
+
+  lastCepQueried = clean;
+
+  const cepInput = document.getElementById('cep');
+  const spinner  = document.getElementById('cep-spinner');
+
+  clearErr('cep');
+  if (spinner) spinner.style.display = 'inline-block';
+
+  if (cepAbortController) {
+    cepAbortController.abort();
+  }
+  cepAbortController = new AbortController();
+
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`, {
+      signal: cepAbortController.signal
+    });
+    const data = await res.json();
+
+    if (data.erro) {
+      setErr('cep', 'CEP não encontrado. Por favor, confira os números digitados.');
+      return;
+    }
+
+    // Preenche os campos de endereço
+    const endEl    = document.getElementById('endereco');
+    const bairroEl = document.getElementById('bairro');
+    const cidEl    = document.getElementById('cidade');
+    const ufEl     = document.getElementById('estado');
+    const numEl    = document.getElementById('numero');
+
+    if (endEl && data.logradouro) {
+      endEl.value = data.logradouro;
+      clearErr('endereco');
+    }
+    if (bairroEl && data.bairro) {
+      bairroEl.value = data.bairro;
+      clearErr('bairro');
+    }
+    if (cidEl && data.localidade) {
+      cidEl.value = data.localidade;
+      clearErr('cidade');
+    }
+    if (ufEl && data.uf) {
+      ufEl.value = data.uf;
+      clearErr('estado');
+    }
+
+    // Foco automático no número para conveniência
+    if (numEl) {
+      numEl.focus();
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.warn('ViaCEP indisponível:', err);
+    }
+  } finally {
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
 function validateStep2() {
   let ok = true;
-  ['cep', 'estado', 'endereco', 'numero', 'cidade', 'nome-gravar'].forEach(clearErr);
+  ['cep', 'estado', 'endereco', 'numero', 'bairro', 'cidade', 'nome-gravar'].forEach(clearErr);
 
-  const cep   = document.getElementById('cep')?.value.replace(/\D/g, '');
-  const uf    = document.getElementById('estado')?.value.trim();
-  const end   = document.getElementById('endereco')?.value.trim();
-  const num   = document.getElementById('numero')?.value.trim();
-  const cid   = document.getElementById('cidade')?.value.trim();
-  const grav  = document.getElementById('nome-gravar')?.value.trim();
+  const cep    = document.getElementById('cep')?.value.replace(/\D/g, '');
+  const uf     = document.getElementById('estado')?.value.trim();
+  const end    = document.getElementById('endereco')?.value.trim();
+  const num    = document.getElementById('numero')?.value.trim();
+  const bairro = document.getElementById('bairro')?.value.trim();
+  const cid    = document.getElementById('cidade')?.value.trim();
+  const grav   = document.getElementById('nome-gravar')?.value.trim();
 
   if (!cep || cep.length !== 8) {
-    setErr('cep', 'Informe um CEP válido.');
+    setErr('cep', 'Informe um CEP válido (8 dígitos).');
     ok = false;
   }
   if (!uf || uf.length < 2) {
@@ -355,6 +428,10 @@ function validateStep2() {
   }
   if (!num) {
     setErr('numero', 'Informe o número.');
+    ok = false;
+  }
+  if (!bairro || bairro.length < 2) {
+    setErr('bairro', 'Informe o bairro.');
     ok = false;
   }
   if (!cid) {
@@ -418,6 +495,8 @@ async function gerarPix() {
   const statusAlert = document.getElementById('pix-status-alert');
   const statusMsg   = document.getElementById('pix-status-msg');
   const totalValEl  = document.getElementById('pix-total-val');
+  const qrContainer = document.getElementById('pix-qr-container');
+  const qrLoading   = document.getElementById('pix-qr-loading');
   const qrImage     = document.getElementById('pix-qr-image');
   const copyInput   = document.getElementById('pix-copy-input');
 
@@ -435,6 +514,13 @@ async function gerarPix() {
 
   if (statusAlert) statusAlert.className = 'pix-status-alert waiting';
   if (statusMsg) statusMsg.textContent = 'Gerando cobrança PIX com o Banco Central...';
+
+  // Exibe o spinner de carregamento centralizado e oculta a imagem até estar pronta
+  if (qrLoading) qrLoading.style.display = 'flex';
+  if (qrImage) {
+    qrImage.style.display = 'none';
+    qrImage.src = '';
+  }
 
   try {
     const res = await fetch('/api/create-charge', {
@@ -463,10 +549,14 @@ async function gerarPix() {
     }
 
     if (qrImage && qrUrl) {
-      qrImage.src = qrUrl;
-      qrImage.onerror = function() {
+      qrImage.onload = () => {
+        if (qrLoading) qrLoading.style.display = 'none';
+        qrImage.style.display = 'block';
+      };
+      qrImage.onerror = () => {
         qrImage.src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(charge.br_code)}`;
       };
+      qrImage.src = qrUrl;
     }
 
     if (copyInput && charge.br_code) {
@@ -481,6 +571,7 @@ async function gerarPix() {
 
   } catch (err) {
     console.error('Erro PIX:', err);
+    if (qrLoading) qrLoading.style.display = 'none';
     if (statusAlert) statusAlert.className = 'pix-status-alert';
     if (statusMsg) {
       if (err.message.includes('150') || err.message.includes('máximo')) {
@@ -578,5 +669,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (telEl) telEl.addEventListener('input', e => { e.target.value = maskPhone(e.target.value); });
 
   const cepEl = document.getElementById('cep');
-  if (cepEl) cepEl.addEventListener('input', e => { e.target.value = maskCEP(e.target.value); });
+  if (cepEl) {
+    cepEl.addEventListener('input', e => {
+      e.target.value = maskCEP(e.target.value);
+      const clean = e.target.value.replace(/\D/g, '');
+      if (clean.length === 8) {
+        consultarCep(clean);
+      }
+    });
+    cepEl.addEventListener('blur', e => {
+      const clean = e.target.value.replace(/\D/g, '');
+      if (clean.length === 8) {
+        consultarCep(clean);
+      }
+    });
+  }
 });

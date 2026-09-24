@@ -353,6 +353,25 @@ a { color: inherit; text-decoration: none; }
   font-weight: 500;
 }
 
+.co-input-loading-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.co-input-spinner {
+  position: absolute;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(27, 46, 40, 0.2);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  animation: spinPix 0.7s linear infinite;
+  pointer-events: none;
+}
+
 .co-hint {
   font-size: 0.74rem;
   color: var(--c-text-muted);
@@ -501,18 +520,28 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── Etapa 3: Pagamento PIX ──────────────────────────────── */
 .pix-view-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
 .pix-status-alert {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.82rem;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 0.84rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
+  text-align: center;
+  max-width: 100%;
 }
 
 .pix-status-alert.waiting {
@@ -541,13 +570,38 @@ a { color: inherit; text-decoration: none; }
 }
 
 .pix-qr-container {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 252px;
+  height: 252px;
   padding: 16px;
   background: #FFFFFF;
   border: 2px solid var(--c-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.pix-qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--c-text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.pix-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(27, 46, 40, 0.15);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  animation: spinPix 0.8s linear infinite;
 }
 
 .pix-qr-code {
@@ -555,13 +609,18 @@ a { color: inherit; text-decoration: none; }
   height: 220px;
   display: block;
   object-fit: contain;
+  margin: 0 auto;
 }
 
 .pix-total-display {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 2px;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
+  width: 100%;
 }
 
 .pix-total-label {
@@ -576,17 +635,19 @@ a { color: inherit; text-decoration: none; }
 }
 
 .pix-copia-box {
+  width: 100%;
   max-width: 480px;
   margin: 0 auto 20px;
-  text-align: left;
+  text-align: center;
 }
 
 .pix-copia-box label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--c-text-title);
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .pix-input-btn-group {
@@ -612,13 +673,19 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.88rem;
   font-weight: 700;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  transition: background 0.2s;
+}
+
+.pix-input-btn-group button:hover {
+  background: var(--c-primary-light);
 }
 
 .pix-steps-list {
   background: var(--c-cream);
   border: 1px solid var(--c-border);
   border-radius: var(--radius-sm);
-  padding: 16px;
+  padding: 18px;
+  width: 100%;
   max-width: 480px;
   margin: 0 auto 20px;
   text-align: left;
@@ -639,11 +706,13 @@ a { color: inherit; text-decoration: none; }
 }
 
 .btn-back-step {
+  display: inline-block;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--c-accent);
   text-decoration: underline;
-  margin-top: 10px;
+  margin: 10px auto 0;
+  text-align: center;
 }
 
 /* Confirmação */
