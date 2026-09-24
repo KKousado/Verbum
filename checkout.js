@@ -651,6 +651,15 @@ function onPaymentConfirmed() {
   }
 
   localStorage.removeItem('verbum_cart');
+
+  // ── Evento de Conversão: Meta Pixel Purchase ──────────
+  if (typeof fbq === 'function') {
+    fbq('track', 'Purchase', {
+      value: Math.max(2.00, cartTotal - couponDiscount),
+      currency: 'BRL'
+    });
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
