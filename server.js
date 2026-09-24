@@ -61,8 +61,12 @@ app.post('/api/create-charge', async (req, res) => {
 
     if (!response.ok) {
       console.error('[FlowinPay] Erro ao criar cobrança:', data);
+      let errorMsg = data.message || 'Erro ao gerar cobrança PIX';
+      if (data.errors && data.errors.value) {
+        errorMsg = Array.isArray(data.errors.value) ? data.errors.value.join(' ') : data.errors.value;
+      }
       return res.status(response.status).json({
-        error: data.message || 'Erro ao gerar cobrança PIX',
+        error: errorMsg,
         details: data
       });
     }

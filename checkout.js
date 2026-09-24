@@ -481,8 +481,17 @@ async function gerarPix() {
 
   } catch (err) {
     console.error('Erro PIX:', err);
-    if (statusMsg) statusMsg.textContent = 'Erro ao conectar. Tente novamente.';
-    alert('Erro ao gerar PIX: ' + err.message);
+    if (statusAlert) statusAlert.className = 'pix-status-alert';
+    if (statusMsg) {
+      if (err.message.includes('150') || err.message.includes('máximo')) {
+        statusMsg.innerHTML = '⚠ <strong>Aviso de Limite FlowinPay (R$ 150,00 por PIX):</strong><br>A sua conta na FlowinPay está com a trava inicial padrão de R$ 150,00. Solicite o aumento de limite para R$ 600+ no painel da FlowinPay ou compre as Bíblias individualmente.';
+      } else {
+        statusMsg.textContent = 'Erro ao conectar: ' + err.message;
+      }
+    }
+    alert(err.message.includes('150')
+      ? 'Aviso: O gateway FlowinPay limitou esta transação a R$ 150,00 na sua conta. Entre em contato com a FlowinPay para elevar seu limite para R$ 600,00 ou mais!'
+      : 'Erro ao gerar PIX: ' + err.message);
   }
 }
 
