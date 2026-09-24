@@ -43,7 +43,7 @@ function renderProducts() {
 
 function buildCard(p) {
   const el = document.createElement('article');
-  el.className = 'product-card';
+  el.className = 'product-item-card';
   el.setAttribute('role', 'listitem');
   el.dataset.id = p.id;
 
@@ -56,20 +56,23 @@ function buildCard(p) {
   if (hasPrice) {
     const pFrom = priceFrom(p.price);
     priceHtml = `
-      <div class="price-block">
-        <div class="price-from">${formatBRL(pFrom)} <span class="price-badge">–45%</span></div>
-        <div class="price-to">${formatBRL(p.price)}</div>
+      <div class="product-pricing-box">
+        <div class="product-price-from">${formatBRL(pFrom)}</div>
+        <div class="product-price-current">
+          <span>${formatBRL(p.price)}</span>
+          <span class="product-discount-pill">–45% OFF</span>
+        </div>
       </div>`;
   } else {
-    priceHtml = `<div class="price-block"><div class="price-placeholder">Aguardando disponibilidade</div></div>`;
+    priceHtml = `<div class="product-pricing-box"><div class="price-placeholder">Aguardando disponibilidade</div></div>`;
   }
 
   // ── Thumbnails (só se houver múltiplas) ──
   let thumbsHtml = '';
   if (p.images.length > 1) {
-    thumbsHtml = `<div class="card-thumbs" role="list" aria-label="Imagens do produto">` +
+    thumbsHtml = `<div class="product-thumbs-bar" role="list" aria-label="Imagens do produto">` +
       p.images.map((img, i) =>
-        `<img class="card-thumb ${i === 0 ? 'active' : ''}"
+        `<img class="product-thumb-btn ${i === 0 ? 'active' : ''}"
               src="${encSrc(img)}"
               alt="Imagem ${i + 1}"
               loading="lazy"
@@ -82,49 +85,45 @@ function buildCard(p) {
 
   el.innerHTML = `
     <!-- Frame da imagem -->
-    <div class="card-img-frame" onclick="openModal(${p.id}, 0)"
+    <div class="product-media-wrap" onclick="openModal(${p.id}, 0)"
          role="button" tabindex="0"
          aria-label="Ver imagens de ${p.name}"
          onkeydown="if(event.key==='Enter')openModal(${p.id},0)">
-      <div class="card-badges">
-        ${hasPrice ? '<span class="badge badge-sale">–45% OFF</span>' : ''}
-        <span class="badge badge-stock ${isLow ? 'critical' : ''}" aria-label="Estoque">
-          ${isLow ? '⚠ Restam ' + p.stock : 'Disponível'}
-        </span>
-      </div>
-      <img class="card-main-img"
+      <span class="product-badge-float">${isLow ? 'Restam ' + p.stock + ' un.' : '⭐ Destaque'}</span>
+      <img class="product-img-main"
            id="card-main-${p.id}"
            src="${encSrc(p.images[0])}"
            alt="${p.name}"
            loading="lazy"
-           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23EDE5D0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%22200%22 y=%22150%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22%23B8912F%22%3E✝ Verbum%3C/text%3E%3C/svg%3E'">
+           onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23F7F5EF%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%22200%22 y=%22150%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22%23B08D57%22%3E✝ Manancial Store%3C/text%3E%3C/svg%3E'">
     </div>
 
     ${thumbsHtml}
 
-    <!-- Corpo -->
-    <div class="card-body">
-      <h3 class="card-name">${p.name}</h3>
-      <p class="card-desc">${p.description}</p>
+    <!-- Conteúdo -->
+    <div class="product-content-body">
+      <h3 class="product-item-title">${p.name}</h3>
+      <p class="product-item-desc">${p.description}</p>
       ${priceHtml}
-      <div class="stock-row" aria-label="Disponibilidade em estoque">
-        <span>${isLow ? '⚠ Últimas unidades' : 'Em estoque'}</span>
-        <div class="stock-bar" role="progressbar" aria-valuenow="${p.stock}" aria-valuemin="0" aria-valuemax="10">
-          <div class="stock-fill ${isLow ? 'low' : ''}" style="width:${stockPct}%"></div>
-        </div>
-        <span>${p.stock}</span>
-      </div>
-      <div class="delivery-badge-note">
+      
+      <div class="product-delivery-note">
         <span>⏳ Produção: <strong>4 dias</strong></span>
         <span>·</span>
         <span>🚚 Frete: <strong>7 dias</strong></span>
       </div>
-      <button class="card-cta" onclick="handlePersonalizeClick(${p.id})">
-        Personalizar minha Bíblia
+
+      <button class="btn-card-action" onclick="handlePersonalizeClick(${p.id})">
+        <span>Personalizar meu Exemplar</span>
+        <span>→</span>
       </button>
     </div>`;
 
   return el;
+}
+
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  if (item) item.classList.toggle('active');
 }
 
 // Troca imagem principal ao clicar na thumbnail
@@ -135,9 +134,9 @@ function switchImg(productId, index) {
   const mainImg = document.getElementById(`card-main-${productId}`);
   if (mainImg) mainImg.src = encSrc(p.images[index]);
 
-  const card = document.querySelector(`.product-card[data-id="${productId}"]`);
+  const card = document.querySelector(`.product-item-card[data-id="${productId}"]`);
   if (card) {
-    card.querySelectorAll('.card-thumb').forEach((t, i) =>
+    card.querySelectorAll('.product-thumb-btn').forEach((t, i) =>
       t.classList.toggle('active', i === index));
   }
 }

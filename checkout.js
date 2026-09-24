@@ -1,22 +1,59 @@
 /**
- * VERBUM — checkout.js (Redesenhado no Modelo KICKZ)
- * - Navegação por etapas (1: Entrega -> 2: Pagamento PIX -> 3: Confirmação)
- * - Geração confiável de QR Code PIX (com fallback automático se FlowinPay retornar null)
- * - Validação ágil e moderna com máscaras de input
- * - Resumo do pedido e preview de personalização em tempo real
+ * MANANCIAL STORE — checkout.js
+ * Inspirado no modelo Amarô / Yever
+ * - Banners rotativos automáticos no topo
+ * - Fluxo por etapas com validação rigorosa
+ * - Geração de QR Code PIX com fallback infalível
+ * - Cupom de desconto dinâmico
+ * - Resumo interativo com controle de quantidade
  */
 
 // ═══════════════════════════════════════════════════════
-//  ESTADO GLOBAL DO CHECKOUT
+//  ESTADO GLOBAL
 // ═══════════════════════════════════════════════════════
 let currentStep = 1;
 let cartItems   = [];
 let cartTotal   = 0;
-let pixChargeId = null;
+let couponDiscount = 0;
+let appliedCouponCode = '';
+let currentSlide = 0;
+let sliderInterval = null;
 let pollingInterval = null;
 
 // ═══════════════════════════════════════════════════════
-//  UTILITÁRIOS
+//  BANNERS ROTATIVOS (SLIDER DO TOPO)
+// ═══════════════════════════════════════════════════════
+function initSlider() {
+  const slides = document.querySelectorAll('.co-slide');
+  const dots   = document.querySelectorAll('.co-dot');
+  if (!slides.length) return;
+
+  function showSlide(index) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    currentSlide = index;
+  }
+
+  window.goToSlide = function(index) {
+    showSlide(index);
+    resetSliderTimer();
+  };
+
+  function nextSlide() {
+    const next = (currentSlide + 1) % slides.length;
+    showSlide(next);
+  }
+
+  function resetSliderTimer() {
+    if (sliderInterval) clearInterval(sliderInterval);
+    sliderInterval = setInterval(nextSlide, 5000);
+  }
+
+  resetSliderTimer();
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILITÁRIOS & FORMATAÇÃO
 // ═══════════════════════════════════════════════════════
 function encSrc(raw) {
   if (!raw) return '';
@@ -76,269 +113,335 @@ function loadCart() {
     cartItems = [];
   }
 
+  recalcTotal();
+}
+
+function recalcTotal() {
   cartTotal = cartItems.reduce((sum, item) => sum + (item.product.price * (item.qty || 1)), 0);
   renderOrderSummary();
 }
 
+function changeQty(index, delta) {
+  if (!cartItems[index]) return;
+  cartItems[index].qty = Math.max(1, (cartItems[index].qty || 1) + delta);
+  localStorage.setItem('verbum_cart', JSON.stringify(cartItems));
+  recalcTotal();
+}
+
 function renderOrderSummary() {
-  const listEl = document.getElementById('summary-items-list');
-  const subtotalEl = document.getElementById('sum-subtotal');
-  const discountEl = document.getElementById('sum-discount');
-  const totalEl = document.getElementById('sum-total-price');
+  const listEl      = document.getElementById('co-sum-items');
+  const subtotalEl  = document.getElementById('sum-subtotal');
+  const discountEl  = document.getElementById('sum-discount');
+  const totalEl     = document.getElementById('sum-total-val');
+  const instEl      = document.getElementById('sum-installment');
+  const mobTotalEl  = document.getElementById('mobile-total-val');
+  const mobCountEl  = document.getElementById('mobile-item-count');
 
   if (!listEl) return;
 
   if (cartItems.length === 0) {
     listEl.innerHTML = `
-      <div style="text-align:center; padding: 24px 0; color: var(--text-muted); font-size: 0.9rem;">
+      <div style="text-align:center; padding: 20px 0; color: var(--c-text-muted); font-size: 0.88rem;">
         Seu carrinho está vazio.<br>
-        <a href="index.html" style="color: var(--brand-primary); font-weight: 700; text-decoration: underline; margin-top: 8px; display: inline-block;">
+        <a href="index.html" style="color: var(--c-primary); font-weight: 700; text-decoration: underline; margin-top: 6px; display: inline-block;">
           Ver Bíblias disponíveis
         </a>
       </div>`;
     if (subtotalEl) subtotalEl.textContent = 'R$ 0,00';
     if (discountEl) discountEl.textContent = '–R$ 0,00';
-    if (totalEl) totalEl.textContent = 'R$ 0,00';
+    if (totalEl)    totalEl.textContent    = 'R$ 0,00';
+    if (mobTotalEl) mobTotalEl.textContent = 'R$ 0,00';
     return;
   }
 
-  listEl.innerHTML = cartItems.map(item => {
+  // Renderiza produtos com seletor de quantidade e versão
+  listEl.innerHTML = cartItems.map((item, idx) => {
     const p = item.product;
     const thumb = p.images?.[0] ? encSrc(p.images[0]) : '';
-    const versionTag = item.versao
-      ? `<span class="summary-item-version" style="display:block; font-size:0.75rem; color:var(--brand-accent); font-weight:600; margin: 1px 0 3px;">Versão: ${item.versao} · ${item.tamanhoLetra}</span>`
-      : '';
+    const originalUnitPrice = priceFrom(p.price);
+    const spec = item.versao ? `Versão: ${item.versao} (${item.tamanhoLetra || 'Letra Grande'})` : '';
+
     return `
-      <div class="summary-item-row">
-        ${thumb ? `<img src="${thumb}" alt="${p.name}" class="summary-item-img" onerror="this.style.display='none'">` : ''}
-        <div class="summary-item-info">
-          <h4 class="summary-item-name">${p.name}</h4>
-          ${versionTag}
-          <span class="summary-item-qty">Qtd: ${item.qty || 1}</span>
+      <div class="co-sum-item-card">
+        ${thumb ? `<img src="${thumb}" alt="${p.name}" class="co-sum-item-img" onerror="this.style.display='none'">` : ''}
+        <div class="co-sum-item-info">
+          <h4 class="co-sum-item-name">${p.name}</h4>
+          ${spec ? `<div class="co-sum-item-spec">${spec}</div>` : ''}
+          <div class="co-sum-qty-row">
+            <button type="button" class="btn-qty" onclick="changeQty(${idx}, -1)" aria-label="Diminuir">-</button>
+            <span class="qty-val">${item.qty || 1}</span>
+            <button type="button" class="btn-qty" onclick="changeQty(${idx}, 1)" aria-label="Aumentar">+</button>
+          </div>
         </div>
-        <div class="summary-item-price">${fmt(p.price * (item.qty || 1))}</div>
+        <div class="co-sum-item-prices">
+          <span class="co-item-price-from">${fmt(originalUnitPrice * (item.qty || 1))}</span>
+          <strong class="co-item-price-to">${fmt(p.price * (item.qty || 1))}</strong>
+        </div>
       </div>`;
   }).join('');
 
-  if (cartTotal > 0) {
-    const originalPrice = priceFrom(cartTotal);
-    const discountAmount = originalPrice - cartTotal;
+  // Cálculos de Total
+  const originalTotalPrice = priceFrom(cartTotal);
+  const baseDiscount = originalTotalPrice - cartTotal;
+  const totalFinal = Math.max(0, cartTotal - couponDiscount);
+  const totalDiscount = baseDiscount + couponDiscount;
 
-    if (subtotalEl) subtotalEl.textContent = fmt(originalPrice);
-    if (discountEl) discountEl.textContent = '– ' + fmt(discountAmount);
-    if (totalEl) totalEl.textContent = fmt(cartTotal);
+  if (subtotalEl) subtotalEl.textContent = fmt(originalTotalPrice);
+  if (discountEl) discountEl.textContent = '– ' + fmt(totalDiscount);
+  if (totalEl)    totalEl.textContent    = fmt(totalFinal);
+  if (mobTotalEl) mobTotalEl.textContent = fmt(totalFinal);
+
+  // Parcelamento em 12x
+  const parcela = (totalFinal / 12) * 1.15; // simulação de parcelamento
+  if (instEl) {
+    instEl.textContent = `12x de ${fmt(parcela)} (ou ${fmt(totalFinal)} à vista no PIX)`;
+  }
+
+  const count = cartItems.reduce((s, i) => s + (i.qty || 1), 0);
+  if (mobCountEl) mobCountEl.textContent = `(${count} item${count > 1 ? 's' : ''})`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CUPOM DE DESCONTO
+// ═══════════════════════════════════════════════════════
+function applyCoupon() {
+  const input = document.getElementById('coupon-input');
+  const msgEl = document.getElementById('coupon-msg');
+  if (!input || !msgEl) return;
+
+  const code = input.value.trim().toUpperCase();
+  if (!code) return;
+
+  if (code === 'MANANCIAL10' || code === 'PROPÓSITO10' || code === 'FE10') {
+    couponDiscount = cartTotal * 0.10;
+    appliedCouponCode = code;
+    msgEl.style.color = 'var(--c-success)';
+    msgEl.textContent = `✓ Cupom ${code} aplicado: 10% de desconto adicional!`;
+    recalcTotal();
+  } else if (code === 'FRETEGRATIS') {
+    msgEl.style.color = 'var(--c-success)';
+    msgEl.textContent = `✓ Frete Grátis ativado para seu CEP!`;
+  } else {
+    msgEl.style.color = 'var(--c-error)';
+    msgEl.textContent = `Cupom inválido ou expirado.`;
   }
 }
 
 // ═══════════════════════════════════════════════════════
 //  PREVIEW DA PERSONALIZAÇÃO EM TEMPO REAL
 // ═══════════════════════════════════════════════════════
-function onCustomizationChange() {
+function onCustomizationInput() {
   const nomeGravar = document.getElementById('nome-gravar')?.value.trim();
   const nomePlaq   = document.getElementById('nome-plaquinha')?.value.trim();
   const versiculo  = document.getElementById('versiculo')?.value.trim();
 
-  const previewBox = document.getElementById('summary-custom-box');
-  const prevName   = document.getElementById('preview-custom-name');
-  const prevExtra  = document.getElementById('preview-custom-extra');
+  const previewBox = document.getElementById('co-pers-preview-box');
+  const prevName   = document.getElementById('co-prev-name');
+  const prevSub    = document.getElementById('co-prev-details');
 
   if (!previewBox) return;
 
   if (nomeGravar) {
-    previewBox.style.display = 'flex';
-    if (prevName) prevName.textContent = nomeGravar;
+    previewBox.style.display = 'block';
+    if (prevName) prevName.textContent = `«${nomeGravar}»`;
 
     const extras = [];
     const bibliaItem = cartItems.find(i => i.versao);
     if (bibliaItem) {
-      extras.push(`Versão ${bibliaItem.versao} (${bibliaItem.tamanhoLetra})`);
+      extras.push(`Versão ${bibliaItem.versao} (${bibliaItem.tamanhoLetra || 'Letra Grande'})`);
     }
     if (nomePlaq) extras.push(`Placa: "${nomePlaq}"`);
     if (versiculo) extras.push(`Versículo: "${versiculo}"`);
 
-    if (prevExtra) prevExtra.textContent = extras.join(' · ');
+    if (prevSub) prevSub.textContent = extras.join(' · ');
   } else {
     previewBox.style.display = 'none';
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  SIMULAÇÃO DE UPLOAD DE FOTO (sem armazenamento)
-// ═══════════════════════════════════════════════════════
 function handlePhotoUpload(input) {
   const feedback = document.getElementById('photo-feedback');
-  const feedbackText = document.getElementById('photo-feedback-text');
-
   if (input.files && input.files[0]) {
-    const fileName = input.files[0].name;
-    if (feedback && feedbackText) {
-      feedback.style.display = 'flex';
-      feedbackText.textContent = `"${fileName}" selecionada com sucesso! Nossa equipe vai incluir na personalização.`;
+    const name = input.files[0].name;
+    if (feedback) {
+      feedback.style.display = 'block';
+      feedback.textContent = `✓ Foto "${name}" selecionada! Incluiremos na confecção.`;
     }
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  NAVEGAÇÃO POR ETAPAS (1 -> 2 -> 3)
-// ═══════════════════════════════════════════════════════
-function goToStep(step) {
-  document.querySelectorAll('.checkout-step-view').forEach(v => v.classList.remove('active'));
-  const view = document.getElementById(`view-step-${step}`);
-  if (view) view.classList.add('active');
+function toggleCnpjField(cb) {
+  const grp = document.getElementById('cnpj-group');
+  if (grp) grp.style.display = cb.checked ? 'block' : 'none';
+}
 
-  // Atualizar tracker
-  for (let i = 1; i <= 3; i++) {
-    const node = document.getElementById(`node-${i}`);
-    if (!node) continue;
-    node.classList.remove('active', 'done');
-
-    const circle = node.querySelector('.step-circle');
-    if (i < step) {
-      node.classList.add('done');
-      if (circle) circle.textContent = '✓';
-    } else if (i === step) {
-      node.classList.add('active');
-      if (circle) circle.textContent = i;
-    } else {
-      if (circle) circle.textContent = i;
-    }
+function toggleMobileSummary() {
+  const summaryCol = document.querySelector('.co-summary-column');
+  if (summaryCol) {
+    const isOpen = summaryCol.style.display === 'block';
+    summaryCol.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) summaryCol.scrollIntoView({ behavior: 'smooth' });
   }
-
-  const fill1 = document.getElementById('fill-1');
-  const fill2 = document.getElementById('fill-2');
-  if (fill1) fill1.style.width = step >= 2 ? '100%' : '0%';
-  if (fill2) fill2.style.width = step >= 3 ? '100%' : '0%';
-
-  currentStep = step;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ═══════════════════════════════════════════════════════
-//  VALIDAÇÃO DO PASSO 1 & AVANÇO
+//  FLUXO POR ETAPAS (1 -> 2 -> 3)
 // ═══════════════════════════════════════════════════════
-function setErr(inputId, errId, msg) {
-  const input = document.getElementById(inputId);
-  const err = document.getElementById(errId);
+function setErr(id, msg) {
+  const input = document.getElementById(id);
+  const err   = document.getElementById(`err-${id}`);
   if (input) input.classList.add('has-error');
-  if (err) err.textContent = msg;
+  if (err)   err.textContent = msg;
 }
 
-function clearErr(inputId, errId) {
-  const input = document.getElementById(inputId);
-  const err = document.getElementById(errId);
+function clearErr(id) {
+  const input = document.getElementById(id);
+  const err   = document.getElementById(`err-${id}`);
   if (input) input.classList.remove('has-error');
-  if (err) err.textContent = '';
+  if (err)   err.textContent = '';
 }
 
-function validateShippingStep() {
-  let valid = true;
+function validateStep1() {
+  let ok = true;
+  ['nome', 'email', 'telefone', 'cpf'].forEach(clearErr);
 
+  const nome  = document.getElementById('nome')?.value.trim();
   const email = document.getElementById('email')?.value.trim();
   const tel   = document.getElementById('telefone')?.value.replace(/\D/g, '');
-  const nome  = document.getElementById('nome')?.value.trim();
   const cpf   = document.getElementById('cpf')?.value.replace(/\D/g, '');
-  const end   = document.getElementById('endereco')?.value.trim();
-  const cid   = document.getElementById('cidade')?.value.trim();
-  const uf    = document.getElementById('estado')?.value.trim();
-  const cep   = document.getElementById('cep')?.value.replace(/\D/g, '');
-  const grav  = document.getElementById('nome-gravar')?.value.trim();
-
-  // Limpar erros anteriores
-  ['email','telefone','nome','cpf','endereco','cidade','estado','cep','nome-gravar'].forEach(f => {
-    clearErr(f, `err-${f}`);
-  });
-
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    setErr('email', 'err-email', 'Informe um e-mail válido para receber as atualizações.');
-    valid = false;
-  }
-
-  if (!tel || tel.length < 10) {
-    setErr('telefone', 'err-telefone', 'Informe um WhatsApp com DDD.');
-    valid = false;
-  }
 
   if (!nome || nome.length < 3) {
-    setErr('nome', 'err-nome', 'Informe seu nome completo.');
-    valid = false;
+    setErr('nome', 'Informe seu nome completo.');
+    ok = false;
   }
-
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    setErr('email', 'Informe um e-mail válido.');
+    ok = false;
+  }
+  if (!tel || tel.length < 10) {
+    setErr('telefone', 'Informe um WhatsApp com DDD.');
+    ok = false;
+  }
   if (!cpf || cpf.length !== 11) {
-    setErr('cpf', 'err-cpf', 'Informe um CPF válido com 11 dígitos.');
-    valid = false;
+    setErr('cpf', 'Informe um CPF válido (11 dígitos).');
+    ok = false;
   }
 
-  if (!end || end.length < 4) {
-    setErr('endereco', 'err-endereco', 'Informe a rua e o número.');
-    valid = false;
-  }
+  return ok;
+}
 
-  if (!cid) {
-    setErr('cidade', 'err-cidade', 'Informe a cidade.');
-    valid = false;
-  }
+function validateStep2() {
+  let ok = true;
+  ['cep', 'estado', 'endereco', 'numero', 'cidade', 'nome-gravar'].forEach(clearErr);
 
-  if (!uf || uf.length < 2) {
-    setErr('estado', 'err-estado', 'UF inválida.');
-    valid = false;
-  }
+  const cep   = document.getElementById('cep')?.value.replace(/\D/g, '');
+  const uf    = document.getElementById('estado')?.value.trim();
+  const end   = document.getElementById('endereco')?.value.trim();
+  const num   = document.getElementById('numero')?.value.trim();
+  const cid   = document.getElementById('cidade')?.value.trim();
+  const grav  = document.getElementById('nome-gravar')?.value.trim();
 
   if (!cep || cep.length !== 8) {
-    setErr('cep', 'err-cep', 'Informe um CEP válido (8 dígitos).');
-    valid = false;
+    setErr('cep', 'Informe um CEP válido.');
+    ok = false;
   }
-
+  if (!uf || uf.length < 2) {
+    setErr('estado', 'Informe o Estado (UF).');
+    ok = false;
+  }
+  if (!end || end.length < 3) {
+    setErr('endereco', 'Informe a rua ou avenida.');
+    ok = false;
+  }
+  if (!num) {
+    setErr('numero', 'Informe o número.');
+    ok = false;
+  }
+  if (!cid) {
+    setErr('cidade', 'Informe a cidade.');
+    ok = false;
+  }
   if (!grav || grav.length < 2) {
-    setErr('nome-gravar', 'err-nome-gravar', 'Informe o nome que será gravado na Bíblia.');
-    valid = false;
+    setErr('nome-gravar', 'Informe o nome que será gravado na Bíblia.');
+    ok = false;
   }
 
-  return valid;
+  return ok;
 }
 
-function submitShippingStep() {
-  if (!validateShippingStep()) {
-    const firstErr = document.querySelector('.has-error');
-    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
+function advanceToStep(step) {
+  if (step === 2) {
+    if (!validateStep1()) {
+      const err = document.querySelector('.has-error');
+      if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    // Esconde body 1 e mostra body 2
+    document.getElementById('step-body-1').style.display = 'none';
+    document.getElementById('step-body-2').style.display = 'block';
+    document.getElementById('btn-edit-1').style.display = 'inline-block';
+    document.getElementById('step-card-1').classList.remove('active');
+    document.getElementById('step-card-2').classList.add('active');
+    window.scrollTo({ top: document.getElementById('step-card-2').offsetTop - 60, behavior: 'smooth' });
   }
 
-  goToStep(2);
-  gerarPix();
+  if (step === 1) {
+    document.getElementById('step-body-1').style.display = 'block';
+    document.getElementById('step-body-2').style.display = 'none';
+    document.getElementById('step-card-1').classList.add('active');
+    document.getElementById('step-card-2').classList.remove('active');
+  }
+
+  if (step === 3) {
+    if (!validateStep2()) {
+      const err = document.querySelector('.has-error');
+      if (err) err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    document.getElementById('step-body-2').style.display = 'none';
+    document.getElementById('step-body-3').style.display = 'block';
+    document.getElementById('step-card-2').classList.remove('active');
+    document.getElementById('step-card-3').classList.add('active');
+
+    window.scrollTo({ top: document.getElementById('step-card-3').offsetTop - 60, behavior: 'smooth' });
+    gerarPix();
+  }
+
+  currentStep = step;
 }
 
 // ═══════════════════════════════════════════════════════
-//  GERAÇÃO ROBUSTA DE PIX FLOWINPAY + QR CODE
+//  GERAÇÃO DE PIX FLOWINPAY + QR CODE
 // ═══════════════════════════════════════════════════════
 async function gerarPix() {
-  const statusBox = document.getElementById('pix-status-box');
-  const statusText = document.getElementById('pix-status-text');
-  const amountDisplay = document.getElementById('pix-amount-display');
-  const copyInput = document.getElementById('pix-copy-code');
-  const qrImg = document.getElementById('pix-qr-img');
+  const statusAlert = document.getElementById('pix-status-alert');
+  const statusMsg   = document.getElementById('pix-status-msg');
+  const totalValEl  = document.getElementById('pix-total-val');
+  const qrImage     = document.getElementById('pix-qr-image');
+  const copyInput   = document.getElementById('pix-copy-input');
 
-  if (statusBox) statusBox.className = 'pix-status-badge waiting';
-  if (statusText) statusText.textContent = 'Gerando cobrança PIX com seu banco...';
-  if (amountDisplay) amountDisplay.textContent = fmt(cartTotal > 0 ? cartTotal : 2.00);
+  const finalAmount = Math.max(2.00, cartTotal - couponDiscount);
+  if (totalValEl) totalValEl.textContent = fmt(finalAmount);
 
-  // Coleta dados
   const nome  = document.getElementById('nome')?.value.trim();
   const email = document.getElementById('email')?.value.trim();
   const cpf   = document.getElementById('cpf')?.value.replace(/\D/g, '');
   const tel   = document.getElementById('telefone')?.value.replace(/\D/g, '');
   const grav  = document.getElementById('nome-gravar')?.value.trim();
-  const plaq  = document.getElementById('nome-plaquinha')?.value.trim();
 
-  const prodNames = cartItems.map(i => `${i.product.name}${i.versao ? ` (${i.versao})` : ''}`).join(', ');
-  const desc = `VERBUM: ${grav ? `Para ${grav} | ` : ''}${prodNames}`.slice(0, 60);
-  const valor = cartTotal > 0 ? cartTotal : 2.00;
+  const prodNames = cartItems.map(i => `${i.product.name}${i.versao ? ` [${i.versao}]` : ''}`).join(', ');
+  const desc = `MANANCIAL: ${grav ? `Para ${grav} | ` : ''}${prodNames}`.slice(0, 60);
+
+  if (statusAlert) statusAlert.className = 'pix-status-alert waiting';
+  if (statusMsg) statusMsg.textContent = 'Gerando cobrança PIX com o Banco Central...';
 
   try {
     const res = await fetch('/api/create-charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        value: valor,
+        value: finalAmount,
         description: desc,
         customer_name: nome,
         customer_email: email,
@@ -348,83 +451,67 @@ async function gerarPix() {
     });
 
     const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Erro ao gerar cobrança PIX.');
-    }
+    if (!res.ok) throw new Error(data.error || 'Erro ao gerar PIX.');
 
     const charge = data.charge;
-    if (!charge) throw new Error('Dados de cobrança não retornados.');
+    if (!charge) throw new Error('Cobrança não retornada.');
 
-    pixChargeId = charge.id;
-
-    // ─── GERAÇÃO DO QR CODE INFALÍVEL ───
-    // Se a FlowinPay retornar qr_code_image nulo, usamos o br_code com a API de QR Code instantânea
+    // QR Code infalível (se retornar null, geramos na hora via br_code)
     let qrUrl = charge.qr_code_image;
     if (!qrUrl && charge.br_code) {
       qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(charge.br_code)}`;
     }
 
-    if (qrImg && qrUrl) {
-      qrImg.src = qrUrl;
-      qrImg.style.display = 'block';
-
-      // Fallback extra caso bloqueador bloqueie imagem externa:
-      qrImg.onerror = function() {
-        console.warn('Erro ao carregar imagem externa do QR, tentando alternativa...');
-        qrImg.src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(charge.br_code)}`;
+    if (qrImage && qrUrl) {
+      qrImage.src = qrUrl;
+      qrImage.onerror = function() {
+        qrImage.src = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(charge.br_code)}`;
       };
     }
 
-    // Copia e cola
     if (copyInput && charge.br_code) {
       copyInput.value = charge.br_code;
       copyInput.dataset.code = charge.br_code;
     }
 
-    if (statusText) statusText.textContent = 'Aguardando seu pagamento PIX...';
+    if (statusMsg) statusMsg.textContent = 'Aguardando seu pagamento PIX...';
 
-    // Iniciar verificação automática de pagamento
+    // Inicia verificação automática
     startPolling(charge.id);
 
   } catch (err) {
-    console.error('[Checkout PIX] Erro:', err);
-    if (statusText) statusText.textContent = 'Erro ao conectar. Tentando novamente...';
-    alert('Não foi possível gerar o código PIX: ' + err.message + '\nVerifique os dados e tente novamente.');
+    console.error('Erro PIX:', err);
+    if (statusMsg) statusMsg.textContent = 'Erro ao conectar. Tente novamente.';
+    alert('Erro ao gerar PIX: ' + err.message);
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  COPIAR CÓDIGO PIX
-// ═══════════════════════════════════════════════════════
 async function copyPixCode() {
-  const input = document.getElementById('pix-copy-code');
-  const btnText = document.getElementById('btn-copy-text');
-  const btn = document.getElementById('btn-copy-pix');
-  const code = input?.dataset?.code || input?.value;
+  const input = document.getElementById('pix-copy-input');
+  const btn   = document.getElementById('btn-copy-code');
+  const code  = input?.dataset?.code || input?.value;
 
   if (!code || code.length < 10) return;
 
   try {
     await navigator.clipboard.writeText(code);
-  } catch (e) {
+  } catch {
     if (input) {
       input.select();
       document.execCommand('copy');
     }
   }
 
-  if (btnText) btnText.textContent = 'Copiado!';
-  if (btn) btn.classList.add('copied');
-
-  setTimeout(() => {
-    if (btnText) btnText.textContent = 'Copiar';
-    if (btn) btn.classList.remove('copied');
-  }, 3000);
+  if (btn) {
+    btn.textContent = 'Copiado!';
+    btn.style.background = 'var(--c-success)';
+    setTimeout(() => {
+      btn.textContent = 'Copiar';
+      btn.style.background = '';
+    }, 3000);
+  }
 }
 
-// ═══════════════════════════════════════════════════════
-//  POLLING DE CONFIRMAÇÃO DO PIX
-// ═══════════════════════════════════════════════════════
 function startPolling(chargeId) {
   if (pollingInterval) clearInterval(pollingInterval);
 
@@ -436,68 +523,51 @@ function startPolling(chargeId) {
 
       if (status === 'paid') {
         clearInterval(pollingInterval);
-        onPaymentSuccess();
-        return;
+        onPaymentConfirmed();
       }
-
-      if (status === 'expired' || status === 'cancelled') {
-        clearInterval(pollingInterval);
-        const statusBox = document.getElementById('pix-status-box');
-        const statusText = document.getElementById('pix-status-text');
-        if (statusBox) statusBox.className = 'pix-status-badge';
-        if (statusText) statusText.textContent = 'Este PIX expirou. Clique em voltar para gerar um novo.';
-      }
-    } catch (e) {
-      // Ignora falhas pontuais de conexão no polling
+    } catch {
+      // Ignora falhas momentâneas de rede
     }
   }, 4000);
 }
 
-function onPaymentSuccess() {
-  goToStep(3);
+function onPaymentConfirmed() {
+  document.getElementById('step-card-1').style.display = 'none';
+  document.getElementById('step-card-2').style.display = 'none';
+  document.getElementById('step-card-3').style.display = 'none';
+  document.getElementById('step-card-confirmed').style.display = 'block';
 
   const email = document.getElementById('email')?.value.trim();
   const tel   = document.getElementById('telefone')?.value.trim();
 
-  const emailEl = document.getElementById('confirm-email-text');
-  const waEl    = document.getElementById('confirm-whatsapp-text');
+  const emailEl = document.getElementById('confirmed-email-line');
+  const waEl    = document.getElementById('confirmed-wa-line');
 
   if (emailEl && email) {
-    emailEl.innerHTML = `Todas as atualizações da confecção serão enviadas para <strong>${email}</strong>.`;
+    emailEl.innerHTML = `✉️ Enviaremos todas as etapas da gravação para <strong>${email}</strong>.`;
   }
   if (waEl && tel) {
-    waEl.innerHTML = `Nossa equipe entrará em contato via WhatsApp <strong>${tel}</strong> com fotos e o código de rastreamento.`;
+    waEl.innerHTML = `📱 Nossa equipe entrará em contato via WhatsApp <strong>${tel}</strong> com o código de rastreamento.`;
   }
 
-  // Limpa o carrinho após pagamento concluído
   localStorage.removeItem('verbum_cart');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ═══════════════════════════════════════════════════════
-//  MÁSCARAS DE ENTRADA & EVENTOS
-// ═══════════════════════════════════════════════════════
-function bindInputMasks() {
-  const cpfEl = document.getElementById('cpf');
-  if (cpfEl) {
-    cpfEl.addEventListener('input', e => { e.target.value = maskCPF(e.target.value); });
-  }
-
-  const telEl = document.getElementById('telefone');
-  if (telEl) {
-    telEl.addEventListener('input', e => { e.target.value = maskPhone(e.target.value); });
-  }
-
-  const cepEl = document.getElementById('cep');
-  if (cepEl) {
-    cepEl.addEventListener('input', e => { e.target.value = maskCEP(e.target.value); });
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-//  INICIALIZAÇÃO
+//  INICIALIZAÇÃO & MÁSCARAS
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  initSlider();
   loadCart();
-  bindInputMasks();
-  onCustomizationChange();
+  onCustomizationInput();
+
+  const cpfEl = document.getElementById('cpf');
+  if (cpfEl) cpfEl.addEventListener('input', e => { e.target.value = maskCPF(e.target.value); });
+
+  const telEl = document.getElementById('telefone');
+  if (telEl) telEl.addEventListener('input', e => { e.target.value = maskPhone(e.target.value); });
+
+  const cepEl = document.getElementById('cep');
+  if (cepEl) cepEl.addEventListener('input', e => { e.target.value = maskCEP(e.target.value); });
 });

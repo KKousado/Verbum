@@ -1,7 +1,7 @@
 {
-  "name": "verbum-site",
+  "name": "manancial-store",
   "version": "1.0.0",
-  "description": "VERBUM — Bíblias Personalizadas com Integração PIX FlowinPay",
+  "description": "MANANCIAL STORE — Bíblias Personalizadas com Integração PIX FlowinPay",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -16,7 +16,7 @@
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["verbum", "biblias", "pix", "flowinpay"],
-  "author": "Verbum Bíblias Personalizadas"
+  "keywords": ["manancial", "store", "biblias", "pix", "flowinpay"],
+  "author": "Manancial Store"
 }
 

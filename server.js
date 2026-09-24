@@ -143,7 +143,8 @@ app.listen(PORT, () => {
   console.log(`
   ✝ ════════════════════════════════════════════ ✝
   
-      V E R B U M  —  Bíblias Personalizadas
+      M A N A N C I A L   S T O R E
+      Produtos Cristãos com Propósito
       Servidor rodando em http://localhost:${PORT}
   
   ✝ ════════════════════════════════════════════ ✝
