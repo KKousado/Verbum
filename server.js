@@ -14,6 +14,78 @@ const PORT = process.env.PORT || 3000;
 const FLOWINPAY_API_KEY = 'fpk_fhaKuwiqqItDJn9Wvht6RADD5Q82zZUE';
 const FLOWINPAY_BASE = 'https://app.flowinpay.com.br/api/v1';
 
+// ─── Configuração UTMify ───────────────────────────────────────────────────
+const UTMIFY_API_TOKEN = 'ecA0CzX8SCAuUqLcPB4pwnAuYjbrGOcTIm0c';
+
+async function sendOrderToUtmify({
+  orderId,
+  status,
+  value,
+  customer_name,
+  customer_email,
+  customer_phone,
+  customer_tax_id,
+  products = [],
+  trackingParameters = {},
+  createdAt,
+  approvedDate = null
+}) {
+  try {
+    const payload = {
+      orderId: String(orderId),
+      platform: 'ManancialStore',
+      paymentMethod: 'pix',
+      status: status, // 'waiting_payment' | 'paid'
+      createdAt: createdAt || new Date().toISOString().replace('T', ' ').slice(0, 19),
+      approvedDate: approvedDate,
+      refundedAt: null,
+      customer: {
+        name: customer_name || 'Cliente Manancial',
+        email: customer_email || 'cliente@manancialstore.com.br',
+        phone: customer_phone || null,
+        document: customer_tax_id || null,
+        country: 'BR'
+      },
+      products: (products && products.length > 0) ? products : [{
+        id: 'biblia-manancial',
+        name: 'Bíblia Personalizada Manancial Store',
+        quantity: 1,
+        priceInCents: Math.round(Number(value || 0) * 100)
+      }],
+      trackingParameters: {
+        src: trackingParameters.src || null,
+        sck: trackingParameters.sck || null,
+        utm_source: trackingParameters.utm_source || null,
+        utm_campaign: trackingParameters.utm_campaign || null,
+        utm_medium: trackingParameters.utm_medium || null,
+        utm_content: trackingParameters.utm_content || null,
+        utm_term: trackingParameters.utm_term || null
+      },
+      commission: {
+        totalPriceInCents: Math.round(Number(value || 0) * 100),
+        gatewayFeeInCents: 0,
+        userCommissionInCents: Math.round(Number(value || 0) * 100),
+        currency: 'BRL'
+      },
+      isTest: false
+    };
+
+    const utmRes = await fetch('https://api.utmify.com.br/api-credentials/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-token': UTMIFY_API_TOKEN
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const utmData = await utmRes.json().catch(() => ({}));
+    console.log(`[UTMify] Pedido #${orderId} (${status}):`, utmData);
+  } catch (err) {
+    console.warn('[UTMify] Erro na API:', err.message);
+  }
+}
+
 // ─── Middlewares ───────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -30,7 +102,9 @@ app.post('/api/create-charge', async (req, res) => {
       customer_name,
       customer_email,
       customer_tax_id,
-      customer_phone
+      customer_phone,
+      products,
+      trackingParameters
     } = req.body;
 
     // Monta a callbackUrl baseada no host atual
@@ -77,11 +151,47 @@ app.post('/api/create-charge', async (req, res) => {
     }
 
     console.log(`[PIX] Cobrança criada: #${data.charge?.id} — R$ ${value}`);
+
+    // Sincroniza com UTMify (status: waiting_payment)
+    sendOrderToUtmify({
+      orderId: data.charge?.id || `ord_${Date.now()}`,
+      status: 'waiting_payment',
+      value,
+      customer_name,
+      customer_email,
+      customer_phone,
+      customer_tax_id,
+      products,
+      trackingParameters
+    });
+
     res.json(data);
 
   } catch (error) {
     console.error('[FlowinPay] Erro interno:', error.message);
     res.status(500).json({ error: 'Erro interno ao processar pagamento. Tente novamente.' });
+  }
+});
+
+// ─── UTMify: Notificar pagamento aprovado ──────────────────────────────────
+app.post('/api/utmify/paid', async (req, res) => {
+  try {
+    const { orderId, value, customer_name, customer_email, customer_phone, customer_tax_id, products, trackingParameters } = req.body;
+    await sendOrderToUtmify({
+      orderId,
+      status: 'paid',
+      value,
+      customer_name,
+      customer_email,
+      customer_phone,
+      customer_tax_id,
+      products,
+      trackingParameters,
+      approvedDate: new Date().toISOString().replace('T', ' ').slice(0, 19)
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

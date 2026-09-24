@@ -191,6 +191,9 @@ function renderOrderSummary() {
   if (totalEl)    totalEl.textContent    = fmt(totalFinal);
   if (mobTotalEl) mobTotalEl.textContent = fmt(totalFinal);
 
+  const topTotalEl = document.getElementById('top-bar-total');
+  if (topTotalEl) topTotalEl.textContent = fmt(totalFinal);
+
   // Parcelamento em 12x
   const parcela = (totalFinal / 12) * 1.15; // simulação de parcelamento
   if (instEl) {
@@ -456,17 +459,21 @@ function advanceToStep(step) {
     // Esconde body 1 e mostra body 2
     document.getElementById('step-body-1').style.display = 'none';
     document.getElementById('step-body-2').style.display = 'block';
+    document.getElementById('step-body-3').style.display = 'none';
     document.getElementById('btn-edit-1').style.display = 'inline-block';
     document.getElementById('step-card-1').classList.remove('active');
     document.getElementById('step-card-2').classList.add('active');
+    document.getElementById('step-card-3').classList.remove('active');
     window.scrollTo({ top: document.getElementById('step-card-2').offsetTop - 60, behavior: 'smooth' });
   }
 
   if (step === 1) {
     document.getElementById('step-body-1').style.display = 'block';
     document.getElementById('step-body-2').style.display = 'none';
+    document.getElementById('step-body-3').style.display = 'none';
     document.getElementById('step-card-1').classList.add('active');
     document.getElementById('step-card-2').classList.remove('active');
+    document.getElementById('step-card-3').classList.remove('active');
   }
 
   if (step === 3) {
@@ -476,8 +483,23 @@ function advanceToStep(step) {
       return;
     }
 
+    // Atualiza os dados de revisão (Estilo Mercado Pago Imagem 2)
+    const end = document.getElementById('endereco')?.value.trim();
+    const num = document.getElementById('numero')?.value.trim();
+    const bai = document.getElementById('bairro')?.value.trim();
+    const cep = document.getElementById('cep')?.value.trim();
+    const cid = document.getElementById('cidade')?.value.trim();
+    const uf  = document.getElementById('estado')?.value.trim();
+
+    const revStreet = document.getElementById('mp-rev-street');
+    const revCity   = document.getElementById('mp-rev-city');
+    if (revStreet) revStreet.textContent = `${end || 'Endereço'}, ${num || 'S/N'}${bai ? ` — ${bai}` : ''}`;
+    if (revCity)   revCity.textContent   = `CEP: ${cep || ''} — ${cid || ''}, ${uf || ''}`;
+
+    document.getElementById('step-body-1').style.display = 'none';
     document.getElementById('step-body-2').style.display = 'none';
     document.getElementById('step-body-3').style.display = 'block';
+    document.getElementById('step-card-1').classList.remove('active');
     document.getElementById('step-card-2').classList.remove('active');
     document.getElementById('step-card-3').classList.add('active');
 
@@ -485,12 +507,38 @@ function advanceToStep(step) {
     gerarPix();
   }
 
+  // Atualiza as abas de navegação no topo (Estilo Mercado Pago)
+  [1, 2, 3].forEach(s => {
+    const tab = document.getElementById(`tab-step-${s}`);
+    if (tab) {
+      tab.classList.remove('active', 'done');
+      if (s === step) tab.classList.add('active');
+      else if (s < step) tab.classList.add('done');
+    }
+  });
+
   currentStep = step;
 }
 
 // ═══════════════════════════════════════════════════════
-//  GERAÇÃO DE PIX FLOWINPAY + QR CODE
+//  GERAÇÃO DE PIX FLOWINPAY + QR CODE + UTMIFY
 // ═══════════════════════════════════════════════════════
+let currentChargeId = null;
+
+function getTrackingParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'src', 'sck'];
+  const params = {};
+  keys.forEach(k => {
+    const val = urlParams.get(k) || localStorage.getItem(k);
+    if (val) {
+      params[k] = val;
+      try { localStorage.setItem(k, val); } catch (e) {}
+    }
+  });
+  return params;
+}
+
 async function gerarPix() {
   const statusAlert = document.getElementById('pix-status-alert');
   const statusMsg   = document.getElementById('pix-status-msg');
@@ -532,7 +580,14 @@ async function gerarPix() {
         customer_name: nome,
         customer_email: email,
         customer_tax_id: cpf,
-        customer_phone: tel
+        customer_phone: tel,
+        products: cartItems.map(item => ({
+          id: String(item.product.id),
+          name: `${item.product.name}${item.versao ? ` (${item.versao})` : ''}`,
+          quantity: item.qty || 1,
+          priceInCents: Math.round(item.product.price * 100)
+        })),
+        trackingParameters: getTrackingParams()
       })
     });
 
@@ -541,6 +596,7 @@ async function gerarPix() {
 
     const charge = data.charge;
     if (!charge) throw new Error('Cobrança não retornada.');
+    currentChargeId = charge.id;
 
     // QR Code infalível (se retornar null, geramos na hora via br_code)
     let qrUrl = charge.qr_code_image;
@@ -651,6 +707,23 @@ function onPaymentConfirmed() {
   }
 
   localStorage.removeItem('verbum_cart');
+
+  // ── Sincronização UTMify: Pedido Pago ─────────────────
+  try {
+    fetch('/api/utmify/paid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: currentChargeId || `ord_${Date.now()}`,
+        value: Math.max(2.00, cartTotal - couponDiscount),
+        customer_name: document.getElementById('nome')?.value.trim(),
+        customer_email: email,
+        customer_phone: tel,
+        customer_tax_id: document.getElementById('cpf')?.value.replace(/\D/g, ''),
+        trackingParameters: getTrackingParams()
+      })
+    }).catch(() => {});
+  } catch (e) {}
 
   // ── Evento de Conversão: Meta Pixel Purchase ──────────
   if (typeof fbq === 'function') {

@@ -4,36 +4,36 @@
    Clean, Modern, Alta Conversão & Mobile First
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
 
 :root {
-  --c-primary:        #1B2E28; /* Verde Floresta */
-  --c-primary-dark:   #101C18;
-  --c-primary-light:  #28423A;
-  --c-accent:         #B08D57; /* Dourado Nobre */
-  --c-accent-soft:    rgba(176, 141, 87, 0.12);
-  --c-sand:           #D8CDBB;
-  --c-cream:          #F7F5EF;
+  --c-primary:        #009EE3; /* Azul Oficial Mercado Pago */
+  --c-primary-dark:   #0082C4;
+  --c-primary-light:  #29B6F6;
+  --c-accent:         #009EE3; /* Azul Mercado Pago */
+  --c-accent-soft:    rgba(0, 158, 227, 0.08);
+  --c-sand:           #E5E5E5;
+  --c-cream:          #F5F5F5; /* Fundo Mercado Pago Checkout */
   --c-card-bg:        #FFFFFF;
-  --c-border:         #E5DEC3;
-  --c-border-light:   #EAE6DC;
+  --c-border:         #E5E5E5;
+  --c-border-light:   #F0F0F0;
 
-  --c-text-title:     #121A17;
-  --c-text-body:      #2D3833;
-  --c-text-muted:     #6A7670;
-  --c-text-placeholder:#9FA8A4;
+  --c-text-title:     #333333;
+  --c-text-body:      #4A4A4A;
+  --c-text-muted:     #737373;
+  --c-text-placeholder:#9E9E9E;
 
-  --c-success:        #2E7D32;
-  --c-error:          #C62828;
+  --c-success:        #00A650; /* Verde Oficial Mercado Pago */
+  --c-error:          #F04438;
 
-  --font-title:       'Playfair Display', Georgia, serif;
+  --font-title:       'Montserrat', system-ui, -apple-system, sans-serif;
   --font-body:        'Montserrat', system-ui, -apple-system, sans-serif;
 
   --radius-sm:        6px;
-  --radius-md:        12px;
-  --radius-lg:        18px;
+  --radius-md:        10px;
+  --radius-lg:        14px;
 
-  --shadow-card:      0 4px 20px rgba(18, 26, 23, 0.06);
+  --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 /* ─── Reset ──────────────────────────────────────────────── */
@@ -60,11 +60,11 @@ input, textarea, button {
 button { cursor: pointer; border: none; background: none; }
 a { color: inherit; text-decoration: none; }
 
-/* ─── Top Header (Logo Centralizado) ──────────────────────── */
+/* ─── Top Header (Logo + Mercado Pago Seguro) ─────────────── */
 .co-header-top {
   background: #FFFFFF;
   border-bottom: 1px solid var(--c-border);
-  padding: 14px 20px;
+  padding: 12px 20px;
 }
 
 .co-header-inner {
@@ -76,25 +76,115 @@ a { color: inherit; text-decoration: none; }
 }
 
 .co-brand-logo img {
-  height: 44px;
+  height: 42px;
   width: auto;
   max-width: 170px;
   object-fit: contain;
 }
 
-.co-secure-pill {
+.mp-header-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--c-accent);
-  background: var(--c-accent-soft);
-  padding: 4px 10px;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #F0F8FF;
+  border: 1px solid #D0E8F9;
   border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #007EBD;
 }
 
-/* ─── Banners Rotativos (Slider Amarô) ────────────────────── */
+.mp-header-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* ─── Barra Sub-Top (Estilo Mercado Pago Imagem 2: Loja + A Pagar) ──── */
+.mp-subtop-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--c-border);
+  padding: 12px 20px;
+}
+
+.mp-subtop-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mp-store-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333333;
+  letter-spacing: 0.02em;
+}
+
+.mp-amount-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mp-amount-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.88rem;
+  color: #666666;
+}
+
+.mp-chevron-down {
+  transition: transform 0.2s;
+}
+
+.mp-amount-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+/* ─── Navegação em Abas (1. Entrega 2. Pagamento 3. Resumo) ── */
+.mp-steps-nav {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.mp-step-tab {
+  flex: 1;
+  text-align: center;
+  padding: 13px 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #737373;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.mp-step-tab:hover {
+  color: var(--c-primary);
+}
+
+.mp-step-tab.active {
+  color: var(--c-primary);
+  border-bottom: 2px solid var(--c-primary);
+}
+
+.mp-step-tab.done {
+  color: #333333;
+}
+
+/* ─── Banners Rotativos (Slider) ─────────────────────────── */
 .co-slider-wrapper {
   max-width: 1100px;
   margin: 16px auto 0;
@@ -106,18 +196,18 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(18, 26, 23, 0.08);
-  min-height: 100px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  min-height: 96px;
 }
 
 .co-slide {
   display: none;
-  background: linear-gradient(135deg, #1B2E28 0%, #2A443C 60%, #B08D57 100%);
+  background: linear-gradient(135deg, #009EE3 0%, #007EBD 60%, #005691 100%);
   color: #FFFFFF;
   padding: 18px 24px;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--c-accent);
+  border: 1px solid rgba(0, 158, 227, 0.4);
   border-radius: var(--radius-md);
   animation: slideFade 0.4s ease;
 }
@@ -135,29 +225,29 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  background: var(--c-accent);
-  color: var(--c-primary-dark);
+  background: #FFFFFF;
+  color: #007EBD;
   padding: 3px 8px;
-  border-radius: 2px;
+  border-radius: 3px;
   display: inline-block;
   margin-bottom: 6px;
 }
 
 .co-slide-title {
   font-family: var(--font-title);
-  font-size: clamp(1.1rem, 4vw, 1.45rem);
+  font-size: clamp(1.05rem, 3.8vw, 1.35rem);
   color: #FFFFFF;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25;
 }
 
 .co-slide-title strong {
-  color: var(--c-accent-light);
+  color: #FFE082;
 }
 
 .co-slide-desc {
   font-size: 0.8rem;
-  color: var(--c-sand);
+  color: rgba(255, 255, 255, 0.9);
   margin-top: 2px;
 }
 
@@ -185,7 +275,7 @@ a { color: inherit; text-decoration: none; }
 .co-dot.active {
   width: 22px;
   border-radius: 4px;
-  background: var(--c-accent);
+  background: var(--c-primary);
 }
 
 /* ─── Layout do Checkout em 2 Colunas ─────────────────────── */
@@ -498,24 +588,137 @@ a { color: inherit; text-decoration: none; }
 /* Botão Principal de Ação */
 .btn-step-action {
   width: 100%;
-  height: 50px;
+  height: 48px;
   background: var(--c-primary);
   color: #FFFFFF;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s;
-  box-shadow: 0 4px 14px rgba(27, 46, 40, 0.2);
-  margin-top: 10px;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 158, 227, 0.28);
+  margin-top: 14px;
 }
 
 .btn-step-action:hover {
-  background: var(--c-primary-light);
+  background: var(--c-primary-dark);
+  box-shadow: 0 4px 12px rgba(0, 158, 227, 0.35);
   transform: translateY(-1px);
+}
+
+/* Selo de Proteção Mercado Pago */
+.mp-protected-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: #666666;
+  text-align: center;
+}
+
+.mp-protected-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* Card de Revisão de Dados (Estilo Mercado Pago Imagem 2) */
+.mp-review-box {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 24px;
+  text-align: left;
+}
+
+.mp-review-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #333333;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.mp-review-card {
+  background: #FFFFFF;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 6px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.mp-review-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.mp-review-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mp-review-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mp-review-details strong {
+  font-size: 0.88rem;
+  color: #333333;
+}
+
+.mp-review-details span {
+  font-size: 0.78rem;
+  color: #737373;
+}
+
+.mp-btn-alterar {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #009EE3;
+  background: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.mp-btn-alterar:hover {
+  background: rgba(0, 158, 227, 0.08);
+  text-decoration: underline;
+}
+
+.mp-shipping-free {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #00A650;
+  background: #E8F5E9;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.mp-pix-tag {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #009EE3;
+  background: #E1F5FE;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.mp-review-divider {
+  height: 1px;
+  background: var(--c-border-light);
 }
 
 /* ─── Etapa 3: Pagamento PIX ──────────────────────────────── */
@@ -1053,12 +1256,12 @@ a { color: inherit; text-decoration: none; }
   color: var(--c-primary);
 }
 
-/* ─── Rodapé do Checkout ──────────────────────────────────── */
+/* ─── Rodapé do Checkout (Mercado Pago Seguro) ─────────────── */
 .co-checkout-footer {
-  background: var(--c-primary-dark);
-  color: var(--c-sand);
-  padding: 36px 16px;
-  border-top: 2px solid var(--c-accent);
+  background: #FFFFFF;
+  color: #666666;
+  padding: 32px 16px;
+  border-top: 1px solid var(--c-border);
   margin-top: 40px;
 }
 
@@ -1067,7 +1270,7 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   text-align: center;
   align-items: center;
 }
@@ -1080,20 +1283,28 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-.co-footer-logo {
-  max-width: 160px;
-  height: auto;
+.co-footer-seal-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
+.mp-footer-seal {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
 .co-footer-brand p {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   line-height: 1.5;
+  color: #555555;
 }
 
 .co-footer-security {
-  font-size: 0.78rem;
-  color: rgba(216, 205, 187, 0.7);
+  font-size: 0.8rem;
+  color: #777777;
 }
 
 .sr-only {
